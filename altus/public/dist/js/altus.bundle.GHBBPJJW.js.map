@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../../apps/altus/altus/public/js/toolbar.js"],
+  "sourcesContent": ["console.log(\"h\")\n\nfrappe.ui.toolbar.Toolbar = class extends frappe.ui.toolbar.Toolbar {\n    setup_awesomebar() {\n\t\tif (frappe.boot.desk_settings.search_bar) {\n\t\t\tfrappe.call({\n\t\t\t\tmethod: \"altus.api.check_search_bar_per\",\n\t\t\t\targs:{\n\t\t\t\t\tuser : frappe.session.user\n\t\t\t\t},\n\t\t\t\tcallback:r=>{\n\t\t\t\t\tif(r.message){\n\t\t\t\t\t\tlet awesome_bar = new frappe.search.AwesomeBar();\n\t\t\t\t\t\tawesome_bar.setup(\"#navbar-search\");\n\t\t\t\t\t}else{\n\t\t\t\t\t\t$(\"#navbar-search\").prop(\"hidden\", true);\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t})\n\t\t\t\n\t\t}\n\t\tif (frappe.model.can_read(\"RQ Job\")) {\n\t\t\tfrappe.search.utils.make_function_searchable(function () {\n\t\t\t\tfrappe.set_route(\"List\", \"RQ Job\");\n\t\t\t}, __(\"Background Jobs\"));\n\t\t}\n\t}\n}"],
+  "mappings": "MAAA,QAAQ,IAAI,GAAG,EAEf,OAAO,GAAG,QAAQ,QAAU,aAAc,QAAO,GAAG,QAAQ,OAAQ,CAChE,kBAAmB,CACrB,AAAI,OAAO,KAAK,cAAc,YAC7B,OAAO,KAAK,CACX,OAAQ,iCACR,KAAK,CACJ,KAAO,OAAO,QAAQ,IACvB,EACA,SAAS,GAAG,CACX,AAAG,EAAE,QAEJ,AADkB,GAAI,QAAO,OAAO,WAAW,EACnC,MAAM,gBAAgB,EAElC,EAAE,gBAAgB,EAAE,KAAK,SAAU,EAAI,CAEzC,CACD,CAAC,EAGE,OAAO,MAAM,SAAS,QAAQ,GACjC,OAAO,OAAO,MAAM,yBAAyB,UAAY,CACxD,OAAO,UAAU,OAAQ,QAAQ,CAClC,EAAG,GAAG,iBAAiB,CAAC,CAE1B,CACD",
+  "names": []
+}
