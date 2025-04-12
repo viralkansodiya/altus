@@ -97,6 +97,9 @@ from hrms.hr.utils import (
 
 class altusLeaveApplication(LeaveApplication):
 	def on_update(self):
+		if self.status == "Approved":
+			if self.leave_approver != frappe.session.user:
+				frappe.throw("Your application Final approver only allow by {0}".format(get_link_to_form("User" , self.custom_leave_primary_approver, frappe.db.get_value("User", self.leave_approver, "full_name"))))
 		if self.status == "Primary Approved":
 			self.custom_primary_approved = 1
 			if not self.custom_leave_primary_approver:
@@ -108,7 +111,7 @@ class altusLeaveApplication(LeaveApplication):
 			if frappe.db.get_single_value("HR Settings", "send_leave_notification"):
 				self.notify_leave_approver()
 		usr_roles = frappe.get_roles(frappe.session.user)
-		if "Supervisor" not in usr_roles or "Manager" not in usr_roles and self.status not in [ "Primary Approved","Approved"]:
+		if self.status not in [ "Primary Approved","Approved"]:
 			self.share_doc_with_approver(self.custom_leave_primary_approver)
 		else:
 			share_doc_with_approver(self, self.leave_approver)
@@ -156,50 +159,69 @@ class altusLeaveApplication(LeaveApplication):
 		
 	def notify_leave_approver(self):
 		if self.custom_leave_primary_approver and not self.custom_primary_approved:
-			usr_roles = frappe.get_roles(frappe.session.user)
-			if "Supervisor" not in usr_roles or "Manager" not in usr_roles:
-				parent_doc = frappe.get_doc("Leave Application", self.name)
-				args = parent_doc.as_dict()
+			parent_doc = frappe.get_doc("Leave Application", self.name)
+			args = parent_doc.as_dict()
 
-				template = frappe.db.get_single_value("HR Settings", "leave_approval_notification_template")
-				if not template:
-					frappe.msgprint(
-						_("Please set default template for Leave Approval Notification in HR Settings.")
-					)
-					return
-				email_template = frappe.get_doc("Email Template", template)
-				message = frappe.render_template(email_template.response_, args)
-
-				self.notify(
-					{
-						# for post in messages
-						"message": message,
-						"message_to": self.custom_leave_primary_approver,
-						# for email
-						"subject": email_template.subject,
-					}
+			template = frappe.db.get_single_value("HR Settings", "leave_approval_notification_template")
+			if not template:
+				frappe.msgprint(
+					_("Please set default template for Leave Approval Notification in HR Settings.")
 				)
-		if self.leave_approver:
-			usr_roles = frappe.get_roles(frappe.session.user)
-			if "Supervisor" in usr_roles:
-				parent_doc = frappe.get_doc("Leave Application", self.name)
-				args = parent_doc.as_dict()
+				return
+			email_template = frappe.get_doc("Email Template", template)
+			message = frappe.render_template(email_template.response_, args)
 
-				template = frappe.db.get_single_value("HR Settings", "leave_approval_notification_template")
-				if not template:
-					frappe.msgprint(
-						_("Please set default template for Leave Approval Notification in HR Settings.")
-					)
-					return
-				email_template = frappe.get_doc("Email Template", template)
-				message = frappe.render_template(email_template.response_, args)
+			self.notify(
+				{
+					# for post in messages
+					"message": message,
+					"message_to": self.custom_leave_primary_approver,
+					# for email
+					"subject": email_template.subject,
+				}
+			)
+		if self.leave_approver and self.status not in  ["Approved" , "Open"]:
+			parent_doc = frappe.get_doc("Leave Application", self.name)
+			args = parent_doc.as_dict()
 
-				self.notify(
-					{
-						# for post in messages
-						"message": message,
-						"message_to": self.leave_approver,
-						# for email
-						"subject": email_template.subject,
-					}
+			template = frappe.db.get_single_value("HR Settings", "leave_approval_notification_template")
+			if not template:
+				frappe.msgprint(
+					_("Please set default template for Leave Approval Notification in HR Settings.")
 				)
+				return
+			email_template = frappe.get_doc("Email Template", template)
+			message = frappe.render_template(email_template.response_, args)
+
+			self.notify(
+				{
+					# for post in messages
+					"message": message,
+					"message_to": self.leave_approver,
+					# for email
+					"subject": email_template.subject,
+				}
+			)
+		if self.status == "Open" and self.leave_approver and not self.custom_leave_primary_approver:
+			parent_doc = frappe.get_doc("Leave Application", self.name)
+			args = parent_doc.as_dict()
+
+			template = frappe.db.get_single_value("HR Settings", "leave_approval_notification_template")
+			if not template:
+				frappe.msgprint(
+					_("Please set default template for Leave Approval Notification in HR Settings.")
+				)
+				return
+			email_template = frappe.get_doc("Email Template", template)
+			message = frappe.render_template(email_template.response_, args)
+
+			self.notify(
+				{
+					# for post in messages
+					"message": message,
+					"message_to": self.leave_approver,
+					# for email
+					"subject": email_template.subject,
+				}
+			)
+		self.custom_primary_approved = 1
